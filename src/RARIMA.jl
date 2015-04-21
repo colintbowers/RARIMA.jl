@@ -362,6 +362,8 @@ type ARIMAModel
 		return(funcOut)
 	end
 end
+
+
 #--------------------
 #Constructors
 #--------------------
@@ -457,7 +459,7 @@ function estimate{T<:Number}(x::Vector{T}, a::ARIMAInput, method::ASCIIString)
 		reval(rModelName * " <- " * estimate_RInputString(a)) #Estimate ARIMA model and store output in embedded R using rModelName
 	catch
 		println("WARNING: R Routine failed to estimate ARIMA model. Returning white noise ARIMAModel")
-		return(ARIMAModel())
+		return(ARIMAModel(optimCode=-1))
 	end
 	allCoef = rcopy(rModelName * "\$coef")
 	if length(allCoef) > 0
