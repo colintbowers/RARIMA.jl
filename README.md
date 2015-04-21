@@ -7,34 +7,54 @@ An [ARIMA](http://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average
 
 This module allows Julia users to estimate, forecast, and simulate ARIMA time-series models.
 
-Some functions are implemented in pure Julia, while others call functions from the R language. The relevant R functions are accessed using the Julia package [RCall](https://github.com/JuliaStats/RCall.jl). These R functions come from either the R [stats](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/00Index.html) library or the R [forecast](http://cran.r-project.org/web/packages/forecast/index.html) library. Since these R functions are available via the GNU General Public License (v2 or v3), this module uses the GNU GPL v2.
+Some functions are implemented in pure Julia, while others call functions from the R language. The relevant R functions are accessed using the Julia package [*RCall*](https://github.com/JuliaStats/RCall.jl). These R functions come from either the R [stats](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/00Index.html) library or the R [forecast](http://cran.r-project.org/web/packages/forecast/index.html) library. Since these R functions are available via the GNU General Public License (v2 or v3), this module uses the GNU GPL v2.
 
 
-## Initial Notes
+## Setting up *RCall*
 
-* This module does not currently conform to Julia conventions (eg need to add .jl to name, fix up contents of test directory etc) so I haven't turned it into an official package yet. For now, it is best to simply download and run the source code in the src directory.
-* Long-term, ARIMA modelling will hopefully be implemented entirely in Julia under an MIT (or similar) license. This module exists to fill the gap between the present day and that future module.  I've tried to structure the module to take advantage of Julia's type system and multiple dispatch so that this module could sensibly serve as a basis for a module implemented entirely Julia. For example, interested parties could gradually replace the R call's in this module with Julia functions.
+It is recommended that you set up *RCall* and verify it works prior to installing *RARIMA*. *RCall* is an officially registered package, so it can be installed from the Julia REPL using `Pkg.add("RCall")`. For more detail, please refer to the [*RCall* docs](https://github.com/JuliaStats/RCall.jl).
+
+You can verify *RCall* is working correctly using the following commands at the Julia REPL:
+
+    using RCall
+    rcopy("1+2")
+
+which will hopefully return the obvious answer. Also note, you *must* install the *forecast* library into your R library before using *RARIMA*. This can be done from an R terminal (or R IDE of choice, e.g. R-Studio) using the command:
+
+    install.packages("forecast")
+
+to install the library, then:
+
+    library(forecast)
+
+to ensure it loads.
+
+
+## A Word on Julia versus R
+
+The long-term goal is to implement ARIMA time-series modelling capability purely in Julia (preferably under an MIT license rather than GPL). This module exists only to fill the gap between the present day and the day that future goal is realised. I've tried to structure *RARIMA* so that it can serve as the basis of that future module, ie it utilises Julia's type system and multiple dispatch, and have implemented some of the functionality already in Julia.
+
+The most significant functionality that needs to be converted to Julia is the estimation routines (regular and automatic order selection). Currently, these are implemented entirely in R. Because the estimation step typically involves solving a numerical optimisation problem, sometimes things go wrong. One of the main challenges in writing this module is dealing with all the different types of errors that can result from the estimation step in R and passing something informative back to Julia. I haven't spent a huge amount of time on this since the long-term goal is to replace that code with Julia code. Currently, the type returned from estimation functions contains a field `optimCode` that will be set to `0` if everything worked correctly. If there was a known problem from the R end, this field will take on a positive value, and the corresponding optimisation code can be looked up in the R documentation. If something went wrong that the Julia code is not able to understand, this field will be set to `-1`. Watch out for this!
 
 
 ## Quick Start
 
-Since this module is not an official Julia package, simply download the source code from the src directory (RARIMA.jl). You will need to edit the module name in this source code from ctbRARIMA to simply RARIMA (I'll fix this in the next update). Then place the file in your preferred location on the Julia path (use `LOAD_PATH` to see the contents of the current Julia path and use `push!(LOAD_PATH, "SourceCodeDirectoryHere")` to add a directory to the Julia path).
+To install *RARIMA*, first ensure *RCall* is installed and working, and that your R library contains the library *forecast*. See the above section "Setting up *RCall*" for more detail.
 
-Next step is to ensure RCall is installed and working on your system. I had no problems at all with this on Linux, but have no experience with trying this on Windows or Mac. On Linux, the procedure is as follows: first ensure that R is installed on your system and R and Rscript are both on your operating systems search path (open a terminal and try "R" and "Rscript". If nothing happens, they aren't on the search path, or R is not installed). Once R is installed and on the search path, you will need to fire it up and add the forecast library using `install.packages("forecast")` at the R REPL. Then use `library(forecast)` at the R REPL to ensure the forecast library is able to be loaded without a problem
+Since *RARIMA* is not currently an official Julia package, you can install it using:
 
-Next, use `Pkg.add("RCall")` from the Julia REPL to install RCall. Next, type `using(RCall)` at the REPL and hopefully this will start an embedded R. If it doesn't work, refer to the RCall docs for more information. To test that everything is working properly, try `rcopy("3+4")`. This should hopefully return a single element `Vector{Float64}` where that element is `7.0`. If it doesn't, then something has gone wrong with the RCall installation and you will need to refer to the docs of that package for more detail.
+    Pkg.clone("https://github.com/colintbowers/RARIMA.jl")
 
-If everything has gone smoothly up to this point, then you are ready to use RARIMA. Just type `using(RARIMA)` at the REPL to load it, and all functionality should now be available.
+at the Julia REPL. If this is successful, you can now load the package using:
 
-The nuts-and-bolts method for working with this module is via three types, `ARIMAInput`, `AutoARIMAInput`, and `ARIMAModel`, and three functions `estimate`, `forecast`, and `simulate`. However, for those who wish to get moving quickly, keyword-based functionality is available, and we will cover it now: 
-* A specific ARIMA model can be estimated using the `estimateARIMA` function (this wraps the R function `arima`)
-* The order of integreation and lags of an ARIMA model can be automatically detected and then model estimation performed using the `estimateAutoARIMA` function (this wraps the R function `auto.arima`)
-* Forecasts can be obtained by feeding the output of an estimate-type function into the function `forecast`
-* Simulation can be performed using the `simulateARIMA` function.
+    using(RARIMA)
 
-#### Estimation
+The nuts-and-bolts method for working with this module is via three types, `ARIMAInput`, `AutoARIMAInput`, and `ARIMAModel`, and three generic functions `estimate`, `forecast`, and `simulate`. However, keyword-based functionality is available, and this is probably how most users will choose to interact with this package. The keywords are based on the fields of the above three types. A short-list of the most important fields and the associated functionality is provided now.
 
-The first non-optional input to `estimateARIMA` must be your data expressed as type `Vector{T}`, where `T<:Number`. The remaining inputs are keyword arguments, some of which follow (all possible keyword arguments can be found by examining the fields of the type `ARIMAInput`): 
+#### ARIMAInput / Estimation
+
+The most important field in the type `ARIMAInput` are:
+
 * p::Int=0 (autoregressive order) 
 * d::Int=0 (order of integration)
 * q::Int=0 (moving average order)
@@ -44,15 +64,94 @@ The first non-optional input to `estimateARIMA` must be your data expressed as t
 * seasonalPeriod::Int=1 (seasonal period - only relevant if P, D, or Q is > 0)
 * includeIntercept::Bool=true (include an intercept term in the model - only relevant if d and D equal 0)
 
+So one could construct an `ARIMAInput` for an ARIMA(2,1,0,1,0,0) model of monthly data with no intercept using:
+
+    aI = ARIMAInput(p=2, d=1, P=1, seasonalPeriod=12, includeIntercept=false)
+
+Actually, in this case we could have omitted `includeIntercept` because it is automatically set to false when `d > 0` (see the R docs for `arima` for more detail).
+
+Given a vector of observed data, `x::Vector{T}` where `T<:Number`, we can estimate the parameters of a model specified by and `ARIMAInput` using:
+
+    aM = estimate(x, aI)
+
+where the output is of type `ARIMAModel` (discussed later in this section). Note, `estimate(aI, x)` is equivalent. Alternatively, one can make the construction of the `ARIMAInput` implicit by calling the function `estimateARIMA` using keywords. For example, an equivalent command to the one above would be:
+
+    aM = estimateARIMA(x, p=2, d=1, P=1, seasonalPeriod=12, includeIntercept=false)
+
+
+#### AutoARIMAInput / Estimation
+
+In most situations, the user doesn't actually know what order of ARIMA model best suits the data. For this situation, one can use the type `AutoARIMAInput`. The most important fields of this type are:
+
+* d::Int=-1 (used to fix the order of integration of the ARIMA model. A negative value implies you do not wish to fix the order of integration)
+* D::Int=-1 (used to fix the order of seasonal integration of the ARIMA model. A negative value implies you do not wish to fix the seasonal order of integration)
+* seasonal::Bool=false (Set to false to restrict search procedure to non-seasonal ARIMA models)
+
+Most users will be happy to leave all other fields set to their default values. So, for example, a user who wishes to estimate an ARIMA model (given data vector `x`) that they *suspect* might be seasonal and they *know* is integrated of order 1 would use:
+
+    aAI = AutoARIMAInput(d=1, seasonal=true)
+
+to construct the `AutoARIMAInput`, and then:
+
+    aM = estimate(x, aAI)
+
+to estimate the order of the model and its parameters. As before, the output is of type `ARIMAModel`. Alternatively, the construction of the `AutoARIMAInput` can be made implicit by using the `estimateAutoARIMA` with the same keywords. For example:
+
+    aM = estimateAutoARIMA(x, d=1, seasonal=true)
+
+is equivalent to the above command.
+
+
+#### ARIMAModel / Forecast and Simulation
+
+The output of any estimation is of type `ARIMAModel`, so it is necessary to go into a bit more depth on this type. The most important fields are:
+
+* arCoef::Vector{Float64}=Array(Float64, 0) (Vector of AR coefficients)
+* maCoef::Vector{Float64}=Array(Float64, 0) (Vector of MA coefficients)
+* sarCoef::Vector{Float64}=Array(Float64, 0) (Vector of seasonal AR coefficients)
+* smaCoef::Vector{Float64}=Array(Float64, 0) (Vector of seasonal MA coefficients)
+* intercept::Float64=0.0 (Model intercept. Equal to NaN if no intercept)
+* sigma2::Float64=1.0 (Variance of residuals)
+* covCoef::Matrix{Float64}=Array(Float64, 0, 0) (Covariance matrix of coefficients (and intercept if applicable))
+* covCoefName::Vector{ASCIIString}=Array(ASCIIString, 0) (Names corresponding to the rows/columns of covCoef)
+* d::Int=0 (Order of integration)
+* D::Int=0 (Seasonal order of integration)
+* seasonalPeriod::Int=1 (seasonal period of the data)
+* resid::Vector{Float64}=Array(Float64, 0) (Vector of residuals from estimation step)
+* optimCode::Int=0 (Output of optimization code from estimation step. 0 implies everything went well, a positive number implies a problem with convergence, and a negative number implies an unknown problem in the estimation step)
+
+An `ARIMAModel` can be constructed using keywords that correspond to the fields, eg:
+
+    aM = ARIMAModel(arCoef=[0.6, 0.1], smaCoef=[0.1], D=1)
+
+Note that in this case, the fields `covCoef` and `covCoefName` will have appropriate size properties to correspond to the number of coefficients in the model, but that the values will all be automatically initialised to 0.0 or an undefined string respectively. It can then be used to as input to the `simulate` function, eg
+
+    x = simulate(numObs, aM)
+
+will simulate `numObs` steps of a univariate ARIMA time-series corresponding to the model in `aM`. Alternatively, one can construct the `ARIMAModel` implicitly using keyword functionality with the `simulateARIMA` function. For example:
+
+    x = simulateARIMA(numObs, arCoef=[0.6, 0.1], smaCoef=[0.1], D=1)
+
+is equivalent to the above call to `simulate`.
+
+In many cases, an `ARIMAModel` will be constructed naturally as the return output of an estimation function. In this case it can be used to forecast future values of an ARIMA time series.
+
+Usually an `ARIMAModel` will be constructed naturally as the output of an estimation function. 
+
+
+
+
+
+#### Estimation
+
+The first non-optional input to `estimateARIMA` must be your data expressed as type `Vector{T}`, where `T<:Number`. The remaining inputs are keyword arguments, some of which follow (all possible keyword arguments can be found by examining the fields of the type `ARIMAInput`): 
+
 For example, given vector of seasonal data `x` with seasonal period of 4, an ARIMA(2,1,1,0,0,1) could be estimated using:
 
 `M = estimateARIMA(x, p=2, d=1, q=1, Q=1, seasonalPeriod=4)`
 
-Alternatively, if the user is not sure of the order and lags to use, these can be automatically detected using `estimateAutoARIMA`, which also requires the data as first input, and then exhibits the following keyword arguments (again this is a short list - for all keyword arguments see the fields of the type `AutoARIMAInput`):
+Alternatively, if the user is not sure of the order and lags to use, these can be automatically detected using , which also requires the data as first input, and then exhibits the following keyword arguments (again this is a short list - for all keyword arguments see the fields of the type `AutoARIMAInput`):
 
-* d::Int=-1 (order of integration (use to fix a specific value). Set to negative value if d not fixed)
-* D::Int=-1 (order of seasonal integration (use to fix a specific value). Set to negative value if D not fixed)
-* seasonal::Bool=false (Set to false to restrict search procedure to non-seasonal models)
 
 For example, given vector of data `x` that is suspected to exhibit a seasonal component use:
 
@@ -60,17 +159,6 @@ For example, given vector of data `x` that is suspected to exhibit a seasonal co
 
 For the above two functions, the output `M` is of type `ARIMAModel`. This type is a complete specification of an ARIMA model, including coefficients values etc. A short-list of the fields of this type includes (for a full list of fields see the type `ARIMAModel`):
 
-* arCoef::Vector{Float64} (Vector of AR coefficients)
-* maCoef::Vector{Float64} (Vector of MA coefficients)
-* sarCoef::Vector{Float64} (Vector of seasonal AR coefficients)
-* smaCoef::Vector{Float64} (Vector of seasonal MA coefficients)
-* intercept::Float64 (Model intercept. Equal to NaN if no intercept)
-* sigma2::Float64 (Variance of residuals)
-* covCoef::Matrix{Float64} (Covariance matrix of estimated coefficients (and intercept if applicable))
-* covCoefName::Vector{ASCIIString} (Names corresponding to the rows/columns of covCoef)
-* d::Int (Order of integration)
-* D::Int (Seasonal order of integration)
-* resid::Vector{Float64} (Vector of residuals from estimation step)
 
 #### Forecast
 
