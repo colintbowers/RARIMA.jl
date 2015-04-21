@@ -155,6 +155,9 @@ or `forecast(x, aM)` for one-step ahead. This method of `forecast` is implemente
 This concludes the basic instructions on usage of `RARIMA`. The next section contains a full description of each of the types `ARIMAInput`, `AutoARIMAInput`, and `ARIMAModel`, and is only necessary reading for those who want all the details or who plan on contributing to this package (or using the structure of this package as basis for their own package).
 
 
+## MOST USERS DO NOT NEED TO READ BEYOND THIS POINT
+
+
 ## Type Descriptions
 
 #### ARIMAInput
@@ -303,9 +306,6 @@ Output:
 Purpose:
 * The purpose of this function is to estimate the parameters of the input model and return a complete specification of the model
 
-
-
-[![Build Status](https://travis-ci.org/colintbowers/RARIMA.jl.svg?branch=master)](https://travis-ci.org/colintbowers/RARIMA.jl)
 
 
 #### forecast methods
