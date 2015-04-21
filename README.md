@@ -74,7 +74,7 @@ Given a vector of observed data, `x::Vector{T}` where `T<:Number`, we can estima
 
     aM = estimate(x, aI)
 
-where the output is of type `ARIMAModel` (discussed later in this section). Note, `estimate(aI, x)` is equivalent. Alternatively, one can make the construction of the `ARIMAInput` implicit by calling the function `estimateARIMA` using keywords. For example, an equivalent command to the one above would be:
+where the output is of type `ARIMAModel` (discussed later in this section). Note, `estimate(aI, x)` is equivalent (ie order doesn't matter). Alternatively, one can make the construction of the `ARIMAInput` implicit by calling the function `estimateARIMA` using keywords. For example, an equivalent command to the one above would be:
 
     aM = estimateARIMA(x, p=2, d=1, P=1, seasonalPeriod=12, includeIntercept=false)
 
