@@ -64,7 +64,7 @@ The most important fields in the type `ARIMAInput` are:
 * seasonalPeriod::Int=1 (seasonal period - only relevant if P, D, or Q is > 0)
 * includeIntercept::Bool=true (include an intercept term in the model - only relevant if d and D equal 0)
 
-So one could construct an `ARIMAInput` for an ARIMA(2,1,0,1,0,0) model of monthly data with no intercept using:
+So one could construct an `ARIMAInput` for an ARIMA(2,1,0)(1,0,0) model of monthly data with no intercept using:
 
     aI = ARIMAInput(p=2, d=1, P=1, seasonalPeriod=12, includeIntercept=false)
 
