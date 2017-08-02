@@ -15,7 +15,7 @@ module RARIMA
 #	The arima_statdiff and arima_statdiffinv routines create a temporary array for every order of differencing/integration. There is probably a smarter way to do this.
 #LICENSE
 #	Since I wrap the forecast library of Rob Hyndman, an MIT license would be invalid, so instead this module is under the GNU GPL v2. See github repository for more detail: https://github.com/colintbowers/RARIMA.jl.git
------------------------------------------------------------
+#-----------------------------------------------------------
 
 
 #Load any entire modules that are needed (use import ModuleName1, ModuleName2, etc)
