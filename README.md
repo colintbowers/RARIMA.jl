@@ -1,3 +1,7 @@
+## NOTE
+
+This package is no longer actively maintained and will not work on the latest versions of Julia.
+
 ## RARIMA
 
 An [ARIMA](http://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average) (Autoregressive Integrated Moving Average) module for the [Julia](http://julialang.org/) language that uses libraries from the [R language](http://www.r-project.org/)
